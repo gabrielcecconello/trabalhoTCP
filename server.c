@@ -30,9 +30,9 @@ int main(int argc, char **argv, char **argenv)
 	//Atribuindo valores aos atributos do struct de endereço do servidor
 	server_address.sin_family = AF_INET; //IPv4
 	server_address.sin_port = htons(PORT); //Porta TCP
-    server_address.sin_addr.s_addr = INADDR_ANY; //Endereço local
+    	server_address.sin_addr.s_addr = INADDR_ANY; //Endereço local
 
-    //Dando um 'bind' do novo 'socket' a um endereço local
+	//Dando um 'bind' do novo 'socket' a um endereço local
 	if(bind(server_socket, (const struct sockaddr *) &server_address,
 			       	sizeof(server_address)) < 0) {
 		perror("Falha ao associar o socket ao endereço local");
