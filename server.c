@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -11,8 +12,11 @@ int main(int argc, char **argv, char **argenv)
 {
 	int server_socket, comm_socket;
 	int opt = 1;
+	ssize_t msg_byte_num;
 	struct sockaddr_in server_address, client_address;
 	socklen_t client_size = sizeof(client_address);
+	char buffer[149] = { 0 };
+	char* hello = "Hello from server\n";
 
 	//Criando um 'socket' para o servidor
 	if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -30,7 +34,7 @@ int main(int argc, char **argv, char **argenv)
 	//Atribuindo valores aos atributos do struct de endereço do servidor
 	server_address.sin_family = AF_INET; //IPv4
 	server_address.sin_port = htons(PORT); //Porta TCP
-    	server_address.sin_addr.s_addr = INADDR_ANY; //Endereço local
+    server_address.sin_addr.s_addr = INADDR_ANY; //Endereço local
 
 	//Dando um 'bind' do novo 'socket' a um endereço local
 	if(bind(server_socket, (const struct sockaddr *) &server_address,
@@ -45,12 +49,25 @@ int main(int argc, char **argv, char **argenv)
 		exit(EXIT_FAILURE);
 	}
        
-
-   	//Aceita uma solicitação de conexão com um cliente
-	if((comm_socket = accept(server_socket, (struct sockaddr *) &client_address,
-								   	&client_size)) < 0) {
+	while(1) {
+   		//Aceita uma solicitação de conexão com um cliente
+		if((comm_socket = accept(server_socket, (struct sockaddr *) &client_address,
+									   	&client_size)) < 0) {
 			perror("Falha ao aceitar a conexão de um cliente");
 			exit(EXIT_FAILURE);
+		}	
+
+	
+		//Lê a mensagem e guarda o número de bytes lidos
+		msg_byte_num = read(comm_socket, buffer, 148);
+		printf("%s", buffer);
+
+		//Esvazia o buffer após exibir a mensagem
+		memset(&buffer, 0, msg_byte_num); 
+
+		//Manda uma mensagem padrão para o cliente
+		send(comm_socket, hello, strlen(hello), 0);
+		printf("'Hello' message sent\n");	
 	}
 	
 	return(0);
