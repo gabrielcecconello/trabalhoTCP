@@ -3,20 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #define PORT 8080
 
-int main(int argc, char **argv, char **argenv)
+int setting_server() 
 {
-	int server_socket, comm_socket;
 	int opt = 1;
-	ssize_t msg_byte_num;
-	struct sockaddr_in server_address, client_address;
-	socklen_t client_size = sizeof(client_address);
-	char buffer[149] = { 0 };
-	char* hello = "Hello from server\n";
+	int server_socket;
+	struct sockaddr_in server_address;
 
 	//Criando um 'socket' para o servidor
 	if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -48,16 +45,66 @@ int main(int argc, char **argv, char **argenv)
 		perror("Falha ao colocar o socket em modo listen");
 		exit(EXIT_FAILURE);
 	}
-       
-	while(1) {
-   		//Aceita uma solicitação de conexão com um cliente
-		if((comm_socket = accept(server_socket, (struct sockaddr *) &client_address,
-									   	&client_size)) < 0) {
-			perror("Falha ao aceitar a conexão de um cliente");
-			exit(EXIT_FAILURE);
-		}	
 
-	
+	return server_socket;
+}
+
+int accept_new_connection(int server_socket)
+{
+	int comm_socket;
+	struct sockaddr_in client_address;
+	socklen_t client_size = sizeof(client_address);
+
+	//Aceita uma solicitação de conexão com um cliente
+	if((comm_socket = accept(server_socket, (struct sockaddr *) &client_address,
+									&client_size)) < 0) {
+		perror("Falha ao aceitar a conexão de um cliente");
+		exit(EXIT_FAILURE);
+	}
+
+	return comm_socket;
+}
+
+int main(int argc, char **argv, char **argenv)
+{
+	int server_socket;
+	ssize_t msg_byte_num;
+	char buffer[149] = { 0 };
+	char* hello = "Hello from server\n";
+	fd_set fds_ready, fds_current;
+	int highest_fd;
+
+	//Abrindo o socket de comunicação do servidor
+	server_socket = setting_server();
+
+	//Inicializando o set definitivo de FDs
+	FD_ZERO(&fds_current);
+	FD_SET(server_socket, &fds_current);
+
+	while(1) {
+		//Sempre realimentando o set temporário de FDs com o set definitivo
+		fds_ready = fds_current;
+
+		if(select(highest_fd, &fds_ready, NULL, NULL, NULL) < 0) {
+			perror("Falha na operação de 'select'");
+			exit(EXIT_FAILURE);
+		}
+
+		for(int i = 0; i < highest_fd; i++) {
+			if(FD_ISSET(i, &fds_ready)) {
+				if(i == server_socket) {
+					comm_socket = accept_new_connection(server_socket);
+					FD_SET(comm_socket, &fds_ready);
+					if(comm_socket > highest_fd)  {
+						highest_fd = comm_socket;
+					}
+				}
+				else {
+					handle_connection(i);
+				}
+			}
+		}
+
 		//Lê a mensagem e guarda o número de bytes lidos
 		msg_byte_num = read(comm_socket, buffer, 148);
 		printf("%s", buffer);
