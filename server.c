@@ -9,6 +9,14 @@
 #include <netinet/ip.h>
 #define PORT 8080
 
+typedef struct {
+    unsigned short int type;
+    unsigned short int orig_uid;
+    unsigned short int dest_uid;
+    unsigned short int text_len;
+    unsigned char text[141];
+} msg_t;
+
 int setting_server() 
 {
 	int opt = 1;
@@ -65,14 +73,23 @@ int accept_new_connection(int server_socket)
 	return comm_socket;
 }
 
+msg_t divide_buffer(char[149] buffer) {
+	msg_t msg;
+	//TODO: fazer a lógica que divide o buffer na mensagem formatada
+}
+
+//TODO: resolver a lógica de leitura e envio da mensagem
 void handle_connection(int comm_socket) {
 	char buffer[149] = { 0 };
+	msg_t formatted_msg;
 	ssize_t msg_byte_num;
 	char* hello = "Hello from server\n";
 
 	//Lê a mensagem e guarda o número de bytes lidos
 	msg_byte_num = read(comm_socket, buffer, 148);
 	printf("%s", buffer);
+
+	formatted_msg = divide_buffer(buffer);
 
 	//Esvazia o buffer após exibir a mensagem
 	memset(&buffer, 0, msg_byte_num); 
