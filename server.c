@@ -65,17 +65,36 @@ int accept_new_connection(int server_socket)
 	return comm_socket;
 }
 
+void handle_connection(int comm_socket) {
+	char buffer[149] = { 0 };
+	ssize_t msg_byte_num;
+	char* hello = "Hello from server\n";
+
+	//Lê a mensagem e guarda o número de bytes lidos
+	msg_byte_num = read(comm_socket, buffer, 148);
+	printf("%s", buffer);
+
+	//Esvazia o buffer após exibir a mensagem
+	memset(&buffer, 0, msg_byte_num); 
+
+	//Manda uma mensagem padrão para o cliente
+	send(comm_socket, hello, strlen(hello), 0);
+	printf("'Hello' message sent\n");
+}
+
 int main(int argc, char **argv, char **argenv)
 {
-	int server_socket;
-	ssize_t msg_byte_num;
-	char buffer[149] = { 0 };
-	char* hello = "Hello from server\n";
+	int server_socket, comm_socket;
 	fd_set fds_ready, fds_current;
 	int highest_fd;
 
 	//Abrindo o socket de comunicação do servidor
 	server_socket = setting_server();
+	printf("%d", server_socket);
+	fflush(stdout);
+	
+	//Colocando o servidor como o maior FD
+	highest_fd = server_socket;
 
 	//Inicializando o set definitivo de FDs
 	FD_ZERO(&fds_current);
@@ -85,7 +104,7 @@ int main(int argc, char **argv, char **argenv)
 		//Sempre realimentando o set temporário de FDs com o set definitivo
 		fds_ready = fds_current;
 
-		if(select(highest_fd, &fds_ready, NULL, NULL, NULL) < 0) {
+		if(select(highest_fd + 1, &fds_ready, NULL, NULL, NULL) < 0) {
 			perror("Falha na operação de 'select'");
 			exit(EXIT_FAILURE);
 		}
@@ -103,18 +122,7 @@ int main(int argc, char **argv, char **argenv)
 					handle_connection(i);
 				}
 			}
-		}
-
-		//Lê a mensagem e guarda o número de bytes lidos
-		msg_byte_num = read(comm_socket, buffer, 148);
-		printf("%s", buffer);
-
-		//Esvazia o buffer após exibir a mensagem
-		memset(&buffer, 0, msg_byte_num); 
-
-		//Manda uma mensagem padrão para o cliente
-		send(comm_socket, hello, strlen(hello), 0);
-		printf("'Hello' message sent\n");	
+		}	
 	}
 	
 	return(0);
