@@ -56,8 +56,8 @@ int accept_new_connection(int server_socket)
 	socklen_t client_size = sizeof(client_address);
 
 	//Aceita uma solicitação de conexão com um cliente
-	if((comm_socket = accept(server_socket, (struct sockaddr *) &client_address,
-									&client_size)) < 0) {
+	comm_socket = accept(server_socket, (struct sockaddr *) &client_address, &client_size);
+	if(comm_socket < 0) {
 		perror("Falha ao aceitar a conexão de um cliente");
 		exit(EXIT_FAILURE);
 	}
@@ -87,11 +87,11 @@ int main(int argc, char **argv, char **argenv)
 	int server_socket, comm_socket;
 	fd_set fds_ready, fds_current;
 	int highest_fd;
+	struct timeval timeout;
+
 
 	//Abrindo o socket de comunicação do servidor
 	server_socket = setting_server();
-	printf("%d", server_socket);
-	fflush(stdout);
 	
 	//Colocando o servidor como o maior FD
 	highest_fd = server_socket;
@@ -104,22 +104,27 @@ int main(int argc, char **argv, char **argenv)
 		//Sempre realimentando o set temporário de FDs com o set definitivo
 		fds_ready = fds_current;
 
-		if(select(highest_fd + 1, &fds_ready, NULL, NULL, NULL) < 0) {
+		//Reiniciando o timeout a cada iteração
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+
+		if(select(highest_fd + 1, &fds_ready, NULL, NULL, &timeout) < 0) {
 			perror("Falha na operação de 'select'");
 			exit(EXIT_FAILURE);
 		}
 
-		for(int i = 0; i < highest_fd; i++) {
+		for(int i = server_socket; i <= highest_fd; i++) {
 			if(FD_ISSET(i, &fds_ready)) {
 				if(i == server_socket) {
 					comm_socket = accept_new_connection(server_socket);
-					FD_SET(comm_socket, &fds_ready);
+					FD_SET(comm_socket, &fds_current);
 					if(comm_socket > highest_fd)  {
 						highest_fd = comm_socket;
 					}
 				}
 				else {
 					handle_connection(i);
+					//FD_CLR(i, &fds_current);
 				}
 			}
 		}	
