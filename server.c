@@ -7,15 +7,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include "msg_utils.h"
 #define PORT 8080
-
-typedef struct {
-    unsigned short int type;
-    unsigned short int orig_uid;
-    unsigned short int dest_uid;
-    unsigned short int text_len;
-    unsigned char text[141];
-} msg_t;
 
 int setting_server() 
 {
@@ -73,29 +66,52 @@ int accept_new_connection(int server_socket)
 	return comm_socket;
 }
 
-msg_t divide_buffer(char[149] buffer) {
-	msg_t msg;
-	//TODO: fazer a lógica que divide o buffer na mensagem formatada
-}
-
 //TODO: resolver a lógica de leitura e envio da mensagem
-void handle_connection(int comm_socket) {
-	char buffer[149] = { 0 };
-	msg_t formatted_msg;
+int handle_connection(int comm_socket) {
+	unsigned char buffer[149] = { 0 };
 	ssize_t msg_byte_num;
 	char* hello = "Hello from server\n";
+	char* lorem_ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed id arcu posuere massa consequat viverra. Phasellus cursus lorem ac libero eros..a";
+
+	msg_t received_msg;
+	received_msg.type = 2;
+	received_msg.orig_uid = 0;
+	received_msg.dest_uid = 0;
+	memcpy(received_msg.text, lorem_ipsum, strlen(lorem_ipsum) + 1);
+	received_msg.text_len = strlen(received_msg.text);
 
 	//Lê a mensagem e guarda o número de bytes lidos
 	msg_byte_num = read(comm_socket, buffer, 148);
-	printf("%s", buffer);
-
-	formatted_msg = divide_buffer(buffer);
+	//deserialize_msg(received_msg, buffer);
+	printf("%s\n", buffer);
 
 	//Esvazia o buffer após exibir a mensagem
-	memset(&buffer, 0, msg_byte_num); 
+	memset(&buffer, 0, msg_byte_num);
+
+	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
+	 received_msg.orig_uid,
+	  received_msg.dest_uid,
+	  received_msg.text,
+	  received_msg.text_len);
+
+	serialize_msg(&received_msg, buffer);
+	print_buffer_as_bytes(buffer, sizeof(buffer));
+
+	received_msg.type = 0;
+	received_msg.orig_uid = 0;
+	received_msg.dest_uid = 0;
+	memcpy(received_msg.text, "", strlen("") + 1);
+	received_msg.text_len = strlen(received_msg.text);
+
+	deserialize_msg(&received_msg, buffer);
+	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
+	 received_msg.orig_uid,
+	  received_msg.dest_uid,
+	  received_msg.text,
+	  received_msg.text_len);
 
 	//Manda uma mensagem padrão para o cliente
-	send(comm_socket, hello, strlen(hello), 0);
+	send(comm_socket, buffer, 148, 0);
 	printf("'Hello' message sent\n");
 }
 
@@ -105,6 +121,7 @@ int main(int argc, char **argv, char **argenv)
 	fd_set fds_ready, fds_current;
 	int highest_fd;
 	struct timeval timeout;
+	unsigned short int msg_type;
 
 
 	//Abrindo o socket de comunicação do servidor
@@ -140,8 +157,11 @@ int main(int argc, char **argv, char **argenv)
 					}
 				}
 				else {
-					handle_connection(i);
-					//FD_CLR(i, &fds_current);
+					msg_type = handle_connection(i);
+					// //Caso a mensagem seja de 'tchau'
+					// if(msg_type == 1) {
+					// 	FD_CLR(i, &fds_current);
+					// }
 				}
 			}
 		}	
