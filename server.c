@@ -77,7 +77,8 @@ int handle_connection(int comm_socket) {
 	received_msg.type = 2;
 	received_msg.orig_uid = 0;
 	received_msg.dest_uid = 0;
-	memcpy(received_msg.text, lorem_ipsum, strlen(lorem_ipsum) + 1);
+	strncpy(received_msg.text, lorem_ipsum, sizeof(received_msg.text) - 1);
+	received_msg.text[sizeof(received_msg.text) - 1] = '\0';
 	received_msg.text_len = strlen(received_msg.text);
 
 	//Lê a mensagem e guarda o número de bytes lidos
@@ -100,8 +101,15 @@ int handle_connection(int comm_socket) {
 	received_msg.type = 0;
 	received_msg.orig_uid = 0;
 	received_msg.dest_uid = 0;
-	memcpy(received_msg.text, "", strlen("") + 1);
+	strncpy(received_msg.text, "", sizeof(received_msg.text) - 1);
+	received_msg.text[sizeof(received_msg.text) - 1] = '\0';
 	received_msg.text_len = strlen(received_msg.text);
+
+	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
+	 received_msg.orig_uid,
+	  received_msg.dest_uid,
+	  received_msg.text,
+	  received_msg.text_len);
 
 	deserialize_msg(&received_msg, buffer);
 	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
