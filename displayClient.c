@@ -4,24 +4,13 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#define PORT 8080  // Porta para a conexão com o servidor
-#define MAX_TEXT_LEN 140  // Limite de caracteres do texto
-
-// Definindo a estrutura da mensagem
-typedef struct {
-    unsigned short int type;    // Tipo da mensagem
-    unsigned short int orig_uid; // Identificador do cliente de origem
-    unsigned short int dest_uid; // Identificador do cliente de destino
-    unsigned short int text_len; // Tamanho do texto
-    unsigned char text[MAX_TEXT_LEN + 1]; // Texto da mensagem
-} msg_t;
+#include "msg_utils.h"
 
 int main(int argc, char const *argv[])
 {
     int status, valread, client_fd;
     struct sockaddr_in serv_addr;
-    char buffer[1024] = {0};  // Buffer para armazenar a mensagem recebida do servidor
+    char buffer[BUFFER_SIZE] = {0};  // Buffer para armazenar a mensagem recebida do servidor
 
     // Verificar se foi fornecido um identificador de cliente (argumento da linha de comando)
     if (argc != 2) {

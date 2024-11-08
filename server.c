@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include "msg_utils.h"
-#define PORT 8080
 
 int setting_server() 
 {
@@ -68,10 +67,9 @@ int accept_new_connection(int server_socket)
 
 //TODO: resolver a lógica de leitura e envio da mensagem
 int handle_connection(int comm_socket) {
-	unsigned char buffer[149] = { 0 };
+	unsigned char buffer[BUFFER_SIZE] = { 0 };
 	ssize_t msg_byte_num;
 	char* hello = "Hello from server\n";
-	char* lorem_ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed id arcu posuere massa consequat viverra. Phasellus cursus lorem ac libero eros..a";
 
 	msg_t received_msg;
 	received_msg.type = 2;
