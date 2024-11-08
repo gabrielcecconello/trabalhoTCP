@@ -14,6 +14,32 @@ typedef struct {
     unsigned char text[141];
 } msg_t;
 
+void initialize_msg(msg_t* msg) {
+	msg->type = 0;
+	msg->orig_uid = 0;
+	msg->dest_uid = 0;
+	strncpy(msg->text, "", sizeof(msg->text) - 1);
+	msg->text[sizeof(msg->text) - 1] = '\0';
+	msg->text_len = strlen(msg->text);
+}
+ 
+void fill_msg(
+	msg_t* msg,
+	unsigned short int type,
+	unsigned short int orig_uid,
+	unsigned short int dest_uid,
+	unsigned char* text
+) {
+	msg->type = type;
+	msg->orig_uid = orig_uid;
+	msg->dest_uid = dest_uid;
+
+	strncpy(msg->text, text, sizeof(msg->text) - 1);
+	msg->text[sizeof(msg->text) - 1] = '\0';
+
+	msg->text_len = strlen(msg->text);
+}
+
 void deserialize_msg(msg_t* msg, unsigned char* buffer) {
 	int offset = 0;
 
@@ -66,13 +92,13 @@ void send_msg(int socket, msg_t* msg) {
     unsigned char buffer[BUFFER_SIZE];
     serialize_msg(msg, buffer);
 
-    send(socket, buffer, sizeof(buffer), 0);
+    send(socket, buffer, BUFFER_SIZE - 1, 0);
 }
 
 void receive_msg(int socket, msg_t* msg) {
     unsigned char buffer[BUFFER_SIZE];
 
-    ssize_t bytes_received = read(socket, buffer, sizeof(buffer));
+    ssize_t bytes_received = read(socket, buffer, BUFFER_SIZE - 1);
     if(bytes_received > 0) {
         deserialize_msg(msg, buffer);
     }
@@ -82,5 +108,15 @@ void print_buffer_as_bytes(unsigned char* buffer, size_t size) {
     for (size_t i = 0; i < size; i++) {
         printf("%02X ", buffer[i]);  // Imprime o byte em formato hexadecimal
     }
-    printf("\n");
+    printf("\n\n");
+}
+
+void print_msg(msg_t* msg) {
+	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nTamanho da Mensagem: %d\nMensagem: %s\n\n",
+	 		msg->type,
+	 		msg->orig_uid,
+	  		msg->dest_uid,
+	  		msg->text_len,
+	  		msg->text
+	);
 }

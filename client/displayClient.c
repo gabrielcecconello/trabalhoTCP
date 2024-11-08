@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "msg_utils.h"
+#include "../utils/msg_utils.h"
 
 int main(int argc, char const *argv[])
 {
@@ -41,7 +41,7 @@ int main(int argc, char const *argv[])
     serv_addr.sin_port = htons(PORT);  // A porta do servidor (8080)
 
     // Converter o endereço IP do servidor (aqui, usaremos "127.0.0.1" para localhost)
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, "0.0.0.0", &serv_addr.sin_addr) <= 0) {
         perror("Endereço inválido ou não suportado");
         return -1;
     }
@@ -60,7 +60,7 @@ int main(int argc, char const *argv[])
     oi_message.orig_uid = htons(client_id);  // Identificador do cliente
     oi_message.dest_uid = htons(0);  // Destinatário 0, já que a mensagem é apenas para identificar
     oi_message.text_len = htons(0);  // Não há texto na mensagem OI
-    memset(oi_message.text, 0, MAX_TEXT_LEN + 1); // Garantir que o campo de texto esteja vazio
+    memset(oi_message.text, 0, 141); // Garantir que o campo de texto esteja vazio
 
     if (send(client_fd, &oi_message, sizeof(oi_message), 0) == -1) {
         perror("Erro ao enviar OI");

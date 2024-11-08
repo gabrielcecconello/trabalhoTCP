@@ -65,60 +65,26 @@ int accept_new_connection(int server_socket)
 	return comm_socket;
 }
 
-//TODO: resolver a lógica de leitura e envio da mensagem
+//AINDA TÁ MEIO BAGUNÇADO
 int handle_connection(int comm_socket) {
-	unsigned char buffer[BUFFER_SIZE] = { 0 };
-	ssize_t msg_byte_num;
+	// unsigned char buffer[BUFFER_SIZE] = { 0 };
+	// ssize_t msg_byte_num;
 	char* hello = "Hello from server\n";
+	msg_t msg;
+	initialize_msg(&msg);
+	unsigned short int msg_type;
 
-	msg_t received_msg;
-	received_msg.type = 2;
-	received_msg.orig_uid = 0;
-	received_msg.dest_uid = 0;
-	strncpy(received_msg.text, lorem_ipsum, sizeof(received_msg.text) - 1);
-	received_msg.text[sizeof(received_msg.text) - 1] = '\0';
-	received_msg.text_len = strlen(received_msg.text);
-
-	//Lê a mensagem e guarda o número de bytes lidos
-	msg_byte_num = read(comm_socket, buffer, 148);
-	//deserialize_msg(received_msg, buffer);
-	printf("%s\n", buffer);
-
-	//Esvazia o buffer após exibir a mensagem
-	memset(&buffer, 0, msg_byte_num);
-
-	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
-	 received_msg.orig_uid,
-	  received_msg.dest_uid,
-	  received_msg.text,
-	  received_msg.text_len);
-
-	serialize_msg(&received_msg, buffer);
-	print_buffer_as_bytes(buffer, sizeof(buffer));
-
-	received_msg.type = 0;
-	received_msg.orig_uid = 0;
-	received_msg.dest_uid = 0;
-	strncpy(received_msg.text, "", sizeof(received_msg.text) - 1);
-	received_msg.text[sizeof(received_msg.text) - 1] = '\0';
-	received_msg.text_len = strlen(received_msg.text);
-
-	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
-	 received_msg.orig_uid,
-	  received_msg.dest_uid,
-	  received_msg.text,
-	  received_msg.text_len);
-
-	deserialize_msg(&received_msg, buffer);
-	printf("Tipo: %d\nOrigem: %d\nDestino: %d\nMensagem: %s\nTamanho da Mensagem: %d\n\n", received_msg.type,
-	 received_msg.orig_uid,
-	  received_msg.dest_uid,
-	  received_msg.text,
-	  received_msg.text_len);
+	//Lê a mensagem e exibe
+	receive_msg(comm_socket, &msg);
+	msg_type = msg.type;
+	print_msg(&msg);
 
 	//Manda uma mensagem padrão para o cliente
-	send(comm_socket, buffer, 148, 0);
+	fill_msg(&msg, 2, 0, 0, hello);
+	send_msg(comm_socket, &msg);
 	printf("'Hello' message sent\n");
+
+	return msg_type;
 }
 
 int main(int argc, char **argv, char **argenv)
