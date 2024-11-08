@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <pthread.h>
 #include "../utils/msg_utils.h"
 
 int setting_server() 
@@ -79,10 +80,11 @@ int handle_connection(int comm_socket) {
 	msg_type = msg.type;
 	print_msg(&msg);
 
-	//Manda uma mensagem padrão para o cliente
 	fill_msg(&msg, 2, 0, 0, hello);
 	send_msg(comm_socket, &msg);
+
 	printf("'Hello' message sent\n");
+	fflush(stdout);
 
 	return msg_type;
 }
@@ -130,10 +132,11 @@ int main(int argc, char **argv, char **argenv)
 				}
 				else {
 					msg_type = handle_connection(i);
-					// //Caso a mensagem seja de 'tchau'
-					// if(msg_type == 1) {
-					// 	FD_CLR(i, &fds_current);
-					// }
+					//Caso a mensagem seja de 'tchau'
+					if(msg_type == 1) {
+						FD_CLR(i, &fds_current);
+						close(i);
+					}
 				}
 			}
 		}	

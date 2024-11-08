@@ -8,7 +8,7 @@
 
 int main(int argc, char const *argv[])
 {
-    int status, valread, client_fd;
+    int valread, client_fd;
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0};  // Buffer para armazenar a mensagem recebida do servidor
 
@@ -19,7 +19,7 @@ int main(int argc, char const *argv[])
     }
 
     // Usar atoi para converter o ID do cliente (agora funciona corretamente)
-    int client_id = atoi(argv[1]);
+    unsigned short int client_id = atoi(argv[1]);
 
     // Verificar se o ID é válido (1-999)
     if (client_id < 1 || client_id > 999) {
@@ -41,13 +41,13 @@ int main(int argc, char const *argv[])
     serv_addr.sin_port = htons(PORT);  // A porta do servidor (8080)
 
     // Converter o endereço IP do servidor (aqui, usaremos "127.0.0.1" para localhost)
-    if (inet_pton(AF_INET, "0.0.0.0", &serv_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
         perror("Endereço inválido ou não suportado");
         return -1;
     }
 
     // Conectar ao servidor
-    if ((status = connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0) {
+    if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("Falha na conexão");
         return -1;
     }
@@ -56,30 +56,27 @@ int main(int argc, char const *argv[])
 
     // Enviar a mensagem OI para o servidor
     msg_t oi_message;
-    oi_message.type = htons(0);  // Tipo OI
-    oi_message.orig_uid = htons(client_id);  // Identificador do cliente
-    oi_message.dest_uid = htons(0);  // Destinatário 0, já que a mensagem é apenas para identificar
-    oi_message.text_len = htons(0);  // Não há texto na mensagem OI
-    memset(oi_message.text, 0, 141); // Garantir que o campo de texto esteja vazio
-
-    if (send(client_fd, &oi_message, sizeof(oi_message), 0) == -1) {
-        perror("Erro ao enviar OI");
-        close(client_fd);
-        return -1;
-    }
+    initialize_msg(&oi_message);
+    fill_msg(&oi_message, 0, client_id, 0, "OI");
+    send_msg(client_fd, &oi_message);
 
     printf("Mensagem OI enviada para o servidor.\n");
+    fflush(stdout);
 
-    // Ler a resposta do servidor (deve ser uma mensagem OI de volta)
-    valread = read(client_fd, buffer, 1024 - 1);  // Lê até 1023 caracteres
-    if (valread > 0) {
-        buffer[valread] = '\0';  // Garantir que a string esteja terminada em '\0'
-        printf("Mensagem recebida do servidor:\n%s\n", buffer);  // Exibe a mensagem recebida
-    } else {
-        printf("Falha ao ler a mensagem do servidor.\n");
-        close(client_fd);
-        return -1;
-    }
+    receive_msg(client_fd, &oi_message);
+    print_msg(&oi_message);
+
+    // // Ler a resposta do servidor (deve ser uma mensagem OI de volta)
+    // valread = read(client_fd, buffer, 1024 - 1);  // Lê até 1023 caracteres
+
+    // if (valread > 0) {
+    //     buffer[valread] = '\0';  // Garantir que a string esteja terminada em '\0'
+    //     printf("Mensagem recebida do servidor:\n%s\n", buffer);  // Exibe a mensagem recebida
+    // } else {
+    //     printf("Falha ao ler a mensagem do servidor.\n");
+    //     close(client_fd);
+    //     return -1;
+    // }
 
     // Loop para ler as mensagens do servidor (tipo MSG)
     while (1) {

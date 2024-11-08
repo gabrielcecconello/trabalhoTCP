@@ -92,7 +92,11 @@ void send_msg(int socket, msg_t* msg) {
     unsigned char buffer[BUFFER_SIZE];
     serialize_msg(msg, buffer);
 
-    send(socket, buffer, BUFFER_SIZE - 1, 0);
+    if(send(socket, buffer, BUFFER_SIZE - 1, 0) < 0) {
+		printf("Falha ao enviar a mensagem.\n");
+	}
+
+	memset(&buffer, 0, BUFFER_SIZE);
 }
 
 void receive_msg(int socket, msg_t* msg) {
@@ -100,8 +104,15 @@ void receive_msg(int socket, msg_t* msg) {
 
     ssize_t bytes_received = read(socket, buffer, BUFFER_SIZE - 1);
     if(bytes_received > 0) {
+		printf("Mensagem Recebida!\n");
         deserialize_msg(msg, buffer);
     }
+	else if(bytes_received < 0) {
+		printf("Falha ao ler mensagem.\n");
+	}
+
+	fflush(stdout);
+	memset(&buffer, 0, BUFFER_SIZE);
 }
 
 void print_buffer_as_bytes(unsigned char* buffer, size_t size) {
@@ -109,6 +120,7 @@ void print_buffer_as_bytes(unsigned char* buffer, size_t size) {
         printf("%02X ", buffer[i]);  // Imprime o byte em formato hexadecimal
     }
     printf("\n\n");
+	fflush(stdout);
 }
 
 void print_msg(msg_t* msg) {
@@ -119,4 +131,5 @@ void print_msg(msg_t* msg) {
 	  		msg->text_len,
 	  		msg->text
 	);
+	fflush(stdout);
 }

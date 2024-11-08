@@ -3,14 +3,14 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#define PORT 8080
+#include "../utils/msg_utils.h"
 
 int main(int argc, char const *argv[])
 {
-    int status, valread, client_fd;
+    int valread, client_fd;
     struct sockaddr_in serv_addr;
     char *hello = "COME MEU CUZINHO LUIZOLAS E======D";
-    char buffer[1024] = {0};
+    char buffer[BUFFER_SIZE] = {0};
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Erro ao criar socket \n");
@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    if ((status = connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
+    if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         printf("\n Falha na conexão \n");
         return -1;
@@ -34,7 +34,7 @@ int main(int argc, char const *argv[])
 
     send(client_fd, hello, strlen(hello), 0);
     printf("Hello menssage sent\n");
-    valread = read(client_fd, buffer, 1024 - 1);
+    valread = read(client_fd, buffer, BUFFER_SIZE - 1);
     printf("%s\n", buffer);
 
     close(client_fd);
