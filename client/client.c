@@ -95,7 +95,7 @@ int main(int argc, char const *argv[]) {
     }
 
     printf("\t\t\t*** Cliente %d ***\n\nDesligando sistema ...\n\n", client_id);
-    fill_msg(&mensage, 1, 0, 0, "TCHAU");
+    fill_msg(&mensage, 1, client_id, 0, "TCHAU");
     send_msg(client_fd, &mensage);
 
     close(client_fd);
