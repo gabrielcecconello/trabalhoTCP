@@ -2,7 +2,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 149
@@ -214,17 +213,19 @@ void serialize_msg(msg_t *msg, unsigned char *buffer)
 	memcpy(buffer + offset, msg->text, msg->text_len);
 }
 
-void send_msg(int socket, msg_t *msg)
+int send_msg(int socket, msg_t *msg)
 {
 	unsigned char buffer[BUFFER_SIZE];
 	serialize_msg(msg, buffer);
 
 	if (send(socket, buffer, BUFFER_SIZE - 1, 0) < 0)
 	{
-		printf("Falha ao enviar a mensagem.\n");
+		perror("Falha ao enviar a mensagem.\n\n");
+		return 0;
 	}
 
 	memset(&buffer, 0, BUFFER_SIZE);
+	return 1;
 }
 
 // void receive_msg(int socket, msg_t *msg)
@@ -254,25 +255,24 @@ void send_msg(int socket, msg_t *msg)
 // 	memset(buffer, 0, BUFFER_SIZE);
 // }
 
-bool receive_msg(int socket, msg_t *msg)
+int receive_msg(int socket, msg_t *msg)
 {
 	unsigned char buffer[BUFFER_SIZE];
 
 	ssize_t bytes_received = read(socket, buffer, BUFFER_SIZE - 1);
 	if (bytes_received > 0)
 	{
-		printf("Mensagem Recebida!\n");
 		deserialize_msg(msg, buffer);
 	}
 	else if (bytes_received <= 0)
 	{
-		printf("Falha ao ler mensagem.\n");
-		return false;
+		perror("Falha ao ler mensagem.\n\n");
+		return 0;
 	}
 
 	fflush(stdout);
 	memset(&buffer, 0, BUFFER_SIZE);
-	return true;
+	return 1;
 }
 
 void print_buffer_as_bytes(unsigned char *buffer, size_t size)

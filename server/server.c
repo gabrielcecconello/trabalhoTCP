@@ -10,16 +10,14 @@
 #include <pthread.h>
 #include "../utils/msg_utils.h"
 
-#define MAX_CLIENTS 100
+#define MAX_CLIENTS 999
 
-int active_client_ids[MAX_CLIENTS]; // Array para armazenar os IDs de clientes
-
-int num_clients = 0; // Contador de clientes conectados
+unsigned short int active_messager_ids[MAX_CLIENTS]; // Array para armazenar os IDs de clientes de envio
+unsigned short int active_display_ids[MAX_CLIENTS]; // Array para armazenar os IDs de clientes de exibição
 
 // Função para configurar o servidor (sem alterações)
 int setting_server()
 {
-	memset(active_client_ids, -1, sizeof(active_client_ids));
 	int opt = 1;
 	int server_socket;
 	struct sockaddr_in server_address;
@@ -78,18 +76,23 @@ int accept_new_connection(int server_socket)
 	return comm_socket;
 }
 
+// Verifica se o identificador do cliente é de exibição ou de envio
+int verify_messager(int client_id) {
+	if(1 <= client_id && client_id <= 999) return 0;
+	else if(1001 <= client_id && client_id <= 1999) return 1;
+}
+
 // Função para verificar se o identificador do cliente está em uso
 int is_client_id_used(int client_id)
 {
-	// Verifica se o ID do cliente ou o ID + 1000 já está em uso
-	for (int i = 0; i < num_clients; i++)
-	{
-		if (active_client_ids[i] == client_id || active_client_ids[i] == client_id + 1000)
-		{
-			return 1; // ID já em uso
-		}
+	if(!verify_messager(client_id)) {
+		if(active_display_ids[client_id-1] == 0) return 0;
+		else return 1;
 	}
-	return 0; // ID disponível
+	else {
+		if(active_messager_ids[client_id-1] == 0) return 0;
+		else return 1;
+	}
 }
 
 // Função para lidar com a conexão
@@ -98,63 +101,84 @@ int handle_connection(int comm_socket)
 	char *hello = "Hello from server\n";
 	msg_t msg;
 	initialize_msg(&msg);
-	unsigned short int msg_type;
-	int client_id;
+	unsigned short int msg_type, orig_uid, dest_uid, is_messager;
 
 	// Lê a mensagem e exibe
-	if (!receive_msg(comm_socket, &msg))
-		return 1;
+	if (!receive_msg(comm_socket, &msg)) msg_type = 1;
+	else msg_type = msg.type;
 
-	msg_type = msg.type;
+	orig_uid = msg.orig_uid;
+	dest_uid = msg.dest_uid;
+	is_messager = verify_messager(orig_uid);
+	
 	print_msg(&msg);
 
-	// Verifica se a mensagem contém um ID (exemplo: OI com ID)
-	if (msg_type == 0 || msg_type == 2)
-	{
-
-		client_id = msg.orig_uid; // Assumimos que msg.id está vindo corretamente da mensagem do cliente
-
-		// Verifica se o ID está em uso
-		if (is_client_id_used(client_id))
-		{
-			// Envia mensagem de erro para o cliente
-			char *error_msg = "Erro: Identificador já está em uso.\n";
-			fill_msg(&msg, 1, 0, client_id, error_msg);
-			send_msg(comm_socket, &msg);
-			printf("Houve uma tentativa de conexão com o client de ID %d, mas esse identificador já se encontra em uso!\n\n\n", client_id);
-			// close(comm_socket); // Fecha a conexão
-			return 1; // Indica erro
-		}
-		else
-		{
-			// Registra o ID do cliente
-			if (num_clients < MAX_CLIENTS)
+	switch(msg_type) {
+		case 0:
+			// Verifica se o ID está em uso
+			if (is_client_id_used(orig_uid))
 			{
-				active_client_ids[num_clients++] = client_id;
-				for (int i = 0; i < MAX_CLIENTS; i++)
-				{
-					printf("%d ", active_client_ids[i]);
-				}
-				printf("\n");
-
-				// Armazena o ID e incrementa o contador
-				printf("Cliente com ID %d registrado.\n\n\n", client_id);
+				// Envia mensagem de erro para o cliente
+				char *error_msg = "Erro - Identificador já está em uso.";
+				fill_msg(&msg, 1, 0, orig_uid, error_msg);
+				send_msg(comm_socket, &msg);
+				printf("Houve uma tentativa de conexão como um cliente com ID %d, mas esse identificador já se encontra em uso!\n\n", orig_uid);
+				return 1; // Indica erro
 			}
 			else
 			{
-				// Se não houver espaço para mais clientes
-				char *full_msg = "Erro: Número máximo de clientes alcançado.\n";
-				fill_msg(&msg, 1, 0, client_id, full_msg);
-				send_msg(comm_socket, &msg);
-				// close(comm_socket); // Fecha a conexão
-				return 1;
-			}
-		}
-	}
+				// TIREI O CHECK DO NÚMERO DE CLIENTES
+				// Registra o ID do cliente
+				if(!is_messager) {
+					active_display_ids[orig_uid-1] = comm_socket;
 
-	// Se não houver problemas com o ID, envia uma mensagem de resposta
-	fill_msg(&msg, 2, 0, client_id, hello);
-	send_msg(comm_socket, &msg);
+					// print humilde de debug
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						printf("%d ", active_display_ids[i]);
+					}
+					printf("\n");
+				}
+				else {
+					active_messager_ids[orig_uid-1001] = comm_socket;
+
+					// print humilde de debug
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						printf("%d ", active_messager_ids[i]);
+					}
+					printf("\n");
+				}
+
+				// Reenvio da mensagem de OI vinda do cliente.
+				fill_msg(&msg, 0, 0, orig_uid, msg.text);
+				send_msg(comm_socket, &msg);
+
+				// Armazena o ID e incrementa o contador
+				printf("Mensagem OI enviada e cliente com ID %d registrado.\n\n", orig_uid);
+			}
+			break;
+		case 1:
+			if(!is_messager) active_display_ids[orig_uid-1] = 0;
+			else active_messager_ids[orig_uid-1001] = 0;
+			break;
+		case 2:
+			// Se o destino for todos os exibidores
+			if(dest_uid == 0) {
+				// Itera por todos os exibidores cadastrados
+				for(int i = 0; i < MAX_CLIENTS; i++) {
+					if(active_display_ids[dest_uid-1] != 0) {
+						send_msg(active_display_ids[dest_uid-1], &msg);
+					}
+				}
+			}
+			else {
+				if(active_display_ids[dest_uid-1] != 0) {
+					send_msg(active_display_ids[dest_uid-1], &msg);
+				}
+			}
+			break;
+	}
 
 	return msg_type;
 }

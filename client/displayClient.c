@@ -60,45 +60,33 @@ int main(int argc, char const *argv[])
     printf("Conectado ao servidor.\n");
 
     // Enviar a mensagem OI para o servidor
-    msg_t oi_message;
-    initialize_msg(&oi_message);
-    fill_msg(&oi_message, 0, client_id, 0, "OI");
-    send_msg(client_fd, &oi_message);
+    msg_t msg;
 
-    printf("Mensagem OI enviada para o servidor.\n");
-    fflush(stdout);
+    fill_msg(&msg, 0, client_id, 0, "OI");
+    if(send_msg(client_fd, &msg)) {
+        printf("Mensagem OI enviada para o servidor.\n");
+        fflush(stdout);
+    }
 
+    if(receive_msg(client_fd, &msg)) print_msg(&msg);
     
-    receive_msg(client_fd, &oi_message);
-    print_msg(&oi_message);
-
     // Loop para ler as mensagens do servidor (tipo MSG)
-    while (1)
-    {
-        valread = read(client_fd, &buffer, sizeof(buffer));
-        if (valread > 0)
-        {
-            msg_t *received_msg = (msg_t *)buffer;
-            received_msg->type = ntohs(received_msg->type);
-            received_msg->orig_uid = ntohs(received_msg->orig_uid);
-            received_msg->dest_uid = ntohs(received_msg->dest_uid);
-            received_msg->text_len = ntohs(received_msg->text_len);
-
-            if (received_msg->type == 2)
-            { // Se a mensagem for do tipo MSG
-                if (received_msg->dest_uid == 0)
-                {
+    while (1) {
+        if (receive_msg(client_fd, &msg)) {
+            // Se a mensagem for do tipo MSG
+            if (msg.type == 2) { 
+                if (msg.dest_uid == 0) {
                     printf("Mensagem de %d (enviada para todos): %s\n",
-                           received_msg->orig_uid, received_msg->text);
+                           msg.orig_uid, msg.text);
+                    fflush(stdout);
                 }
-                else if (received_msg->dest_uid == client_id)
-                {
-                    printf("Mensagem privada de %d: %s\n", received_msg->orig_uid, received_msg->text);
+                else if (msg.dest_uid == client_id) {
+                    printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
+                    fflush(stdout);
                 }
             }
         }
-        else
-        {
+        else {
             printf("Erro ou desconexão do servidor.\n");
             break;
         }

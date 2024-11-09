@@ -75,7 +75,7 @@ int main(int argc, char const *argv[])
     printf("Mensagem %s enviada para o servidor\n", hello);
     fflush(stdout);
 
-    printf("\n\n");
+    printf("\n");
     printf("Resposta do servidor:\n");
     receive_msg(client_fd, &message_struct);
     print_msg(&message_struct);
