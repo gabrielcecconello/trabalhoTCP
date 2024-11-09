@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
     // Usar atoi para converter o ID do cliente (agora funciona corretamente)
     unsigned short int client_id = atoi(argv[1]);
 
-    // Verificar se o ID é válido (1-999)
+    // Verificar se o ID é válido (1001-1999)
     if (client_id < 1001 || client_id > 1999) {
         printf("Error: ID do cliente inválido. O ID deve ser entre 1001 e 1999.\n");
         return -1;
@@ -36,34 +36,41 @@ int main(int argc, char const *argv[]) {
     system("clear");
     printf("\t\t\t*** Cliente %d ***\n", client_id);
 
+    // Cria um socket
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Erro ao criar socket \n");
         return -1;
     }
 
+    //Configuracoes do scket
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
+    // Configuracao do endereco de rede
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
     {
         printf(" \n Endereço Inválido \n");
         return -1;
     }
 
+    // Conecta com o servidor
     if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         printf("\n Falha na conexão \n");
         return -1;
     }
 
+    // Envio de mensagem OI
     fill_msg(&mensage, 0, client_id, 0, "OI");
     send_msg(client_fd, &mensage);
     printf("Conectando ao servidor ... \n\n");
 
+    // Leitura da resposta do servidor
     receive_msg(client_fd, &mensage);
     printf("\nMensagem do servidor: %s\n\n", mensage.text);
 
+    // Envio de multiplas mensagens para o servidor
     while(is_sending_mensage) {
         if(!is_fisrt_mensage) {
             printf("\t\t\t*** Cliente %d ***\n\n", client_id);
@@ -94,6 +101,7 @@ int main(int argc, char const *argv[]) {
         system("clear");
     }
 
+    // Envio de mensagem TCHAU e desconexao com o servidor
     printf("\t\t\t*** Cliente %d ***\n\nDesligando sistema ...\n\n", client_id);
     fill_msg(&mensage, 1, client_id, 0, "TCHAU");
     send_msg(client_fd, &mensage);
