@@ -169,8 +169,8 @@ int handle_connection(int comm_socket)
 			if(dest_uid == 0) {
 				// Itera por todos os exibidores cadastrados
 				for(int i = 0; i < MAX_CLIENTS; i++) {
-					if(active_display_ids[dest_uid-1] != 0) {
-						send_msg(active_display_ids[dest_uid-1], &msg);
+					if(active_display_ids[i] != 0) {
+						send_msg(active_display_ids[i], &msg);
 					}
 				}
 			}
