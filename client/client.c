@@ -67,9 +67,13 @@ int main(int argc, char const *argv[]) {
     printf("Conectando ao servidor ... \n\n");
 
     // Leitura da resposta do servidor
-    receive_msg(client_fd, &message);
-    printf("\nMensagem do servidor: %s\n\n", message.text);
+    if(!receive_msg(client_fd, &message)) {
+        printf("Erro: conexao rejeitada do servidor\n\n");
+        return 0;
+    }
 
+    printf("\nMensagem do servidor: %s\n\n", message.text);
+    
     // Envio de multiplas mensagens para o servidor
     while(is_sending_message) {
         if(!is_fisrt_message) {
@@ -103,7 +107,7 @@ int main(int argc, char const *argv[]) {
 
     // Envio de mensagem TCHAU e desconexao com o servidor
     printf("\t\t\t*** Cliente %d ***\n\nDesligando sistema ...\n\n", client_id);
-    fill_msg(&message, 1, client_id, 0, "TCHAU");
+    fill_msg(&message, 1, client_id, client_id - 1000, "TCHAU");
     send_msg(client_fd, &message);
 
     fflush(stdout);

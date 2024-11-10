@@ -138,8 +138,8 @@ int handle_connection(int comm_socket)
 				return 1; // Indica erro
 			}
 
-			// Verifica se ha menos de 10 cliente de envio
-			int cont;
+			int cont = 0;
+			// Verifica se ha menos de 10 cliente de exibicao
 			if(orig_uid > 1000) {
 				for (int i = 1; i <= MAX_CLIENTS; i++) {
 					if(active_messager_ids[i] != 0) {
@@ -147,20 +147,32 @@ int handle_connection(int comm_socket)
 					}
 
 					if(cont >= 10) {
-						printf("Limite de clientes de envio excedido");
+						printf("Limite de clientes de envio excedido\n\n");
 						return 1;
 					}
 				}
-			}
 
-			// Verifica se ha menos de 10 cliente de exibicao
-			for (int i = 1; i <= MAX_CLIENTS; i++) {
-				if(active_display_ids[i] != 0) {
-					cont ++;
+				if(active_display_ids[msg.orig_uid - 1001] == 0) {
+					printf("Nenhum cliente exibidor relativo ao id %d cadastro ainda\n\n", orig_uid - 1000);
+					return 1;
+				}
+			} else {
+				cont = 0;
+				// Verifica se ha menos de 10 cliente de exibicao
+				for (int i = 1; i <= MAX_CLIENTS; i++) {
+					if(active_display_ids[i] != 0) {
+						cont ++;
+					}
+
+					if(cont >= 10) {
+						printf("Limite de clientes de exibicao excedido");
+						return 1;
+					}
 				}
 
-				if(cont >= 10) {
-					printf("Limite de clientes de exibicao excedido");
+				// Verifica se nao ha nenhum cliente de envio relativo cadastrado
+				if(active_messager_ids[msg.orig_uid - 1] != 0) {
+					printf("ja ha cliente de envio no id %d\n\n", orig_uid + 1000);
 					return 1;
 				}
 			}
@@ -178,8 +190,10 @@ int handle_connection(int comm_socket)
 			break;
 
 		case 1:
-			if(!is_messager) active_display_ids[orig_uid-1] = 0;
-			else active_messager_ids[orig_uid-1001] = 0;
+			active_messager_ids[orig_uid-1001] = 0;
+			send_msg(active_display_ids[orig_uid-1001], &msg);
+			close(active_display_ids[orig_uid-1001]);
+			active_display_ids[orig_uid-1001] = 0;
 			break;
 
 		case 2:

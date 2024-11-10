@@ -66,32 +66,35 @@ int main(int argc, char const *argv[])
         printf("Mensagem OI enviada para o servidor.\n");
     }
 
-    if(receive_msg(client_fd, &msg)) printf("Mensagem do Servidor: %s\n\n", msg.text);
+    if(!receive_msg(client_fd, &msg)) {
+        printf("Erro: conexao rejeitada do servidor\n\n");
+        return 0;
+    }
+
+    printf("Mensagem do Servidor: %s\n\n", msg.text);
     
     // Loop para ler as mensagens do servidor (tipo MSG)
-    while (1) {
+    while (msg.type != 1) {
         if (!receive_msg(client_fd, &msg)) {
             printf("Erro ou desconexão do servidor.\n");
             break;
         }
 
-        // Se a mensagem for do tipo MSG
-        if (msg.type == 2) {
-            if(msg.orig_uid == 0) {
-                printf("\nMensagem do Servidor: %s", msg.text);
-            
-            } else if (msg.dest_uid == 0) {
-                printf("Mensagem de %d: %s\n", msg.orig_uid, msg.text);
-            
-            } else if (msg.dest_uid == client_id) {
-                printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
-            }
+        if(msg.orig_uid == 0 || msg.type == 1) {
+            printf("\nMensagem do Servidor: %s", msg.text);
+        
+        } else if (msg.dest_uid == 0) {
+            printf("Mensagem de %d: %s\n", msg.orig_uid, msg.text);
+        
+        } else if (msg.dest_uid == client_id) {
+            printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
         }
-
+        
         memset(msg.text, '\0', sizeof(msg.text));
     }
 
     // Fechar o socket
+    printf("\n\n");
     close(client_fd);
 
     return 0;
