@@ -63,30 +63,28 @@ int main(int argc, char const *argv[])
     fill_msg(&msg, 0, client_id, 0, "OI");
     if(send_msg(client_fd, &msg)) {
         printf("Mensagem OI enviada para o servidor.\n");
-        fflush(stdout);
     }
 
     if(receive_msg(client_fd, &msg)) print_msg(&msg);
     
     // Loop para ler as mensagens do servidor (tipo MSG)
     while (1) {
-        if (receive_msg(client_fd, &msg)) {
-            // Se a mensagem for do tipo MSG
-            if (msg.type == 2) { 
-                if (msg.dest_uid == 0) {
-                    printf("Mensagem de %d (enviada para todos): %s\n",
-                           msg.orig_uid, msg.text);
-                    fflush(stdout);
-                }
-                else if (msg.dest_uid == client_id) {
-                    printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
-                    fflush(stdout);
-                }
-            }
-        }
-        else {
+        if (!receive_msg(client_fd, &msg)) {
             printf("Erro ou desconexão do servidor.\n");
             break;
+        }
+
+        // Se a mensagem for do tipo MSG
+        if (msg.type == 2) {
+            if(msg.orig_uid == 0) {
+                printf("Mensagem do servidor: %s", msg.text);
+            
+            } else if (msg.dest_uid == 0) {
+                printf("Mensagem de %d: %s\n", msg.orig_uid, msg.text);
+            
+            } else if (msg.dest_uid == client_id) {
+                printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
+            }
         }
     }
 

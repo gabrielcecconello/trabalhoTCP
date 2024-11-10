@@ -8,14 +8,11 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "../utils/msg_utils.h"
+#include "./utils/shared.h"
 #include "./utils/timer.h"
-
-#define MAX_CLIENTS 999
-
-unsigned short int active_messager_ids[MAX_CLIENTS]; // Array para armazenar os IDs de clientes de envio
-unsigned short int active_display_ids[MAX_CLIENTS]; // Array para armazenar os IDs de clientes de exibição
 
 // Função para configurar o servidor (sem alterações)
 int setting_server()
@@ -141,24 +138,23 @@ int handle_connection(int comm_socket)
 				printf("Houve uma tentativa de conexão como um cliente com ID %d, mas esse identificador já se encontra em uso!\n\n", orig_uid);
 				return 1; // Indica erro
 			}
-			else
-			{
-				// Registra o ID do cliente
-				if(!is_messager) active_display_ids[orig_uid-1] = comm_socket;
-				else active_messager_ids[orig_uid-1001] = comm_socket;
+			// Registra o ID do cliente
+			if(!is_messager) active_display_ids[orig_uid-1] = comm_socket;
+			else active_messager_ids[orig_uid-1001] = comm_socket;
 
-				// Reenvio da mensagem de OI vinda do cliente.
-				fill_msg(&msg, 0, 0, orig_uid, msg.text);
-				send_msg(comm_socket, &msg);
+			// Reenvio da mensagem de OI vinda do cliente.
+			fill_msg(&msg, 0, 0, orig_uid, msg.text);
+			send_msg(comm_socket, &msg);
 
-				// Armazena o ID e incrementa o contador
-				printf("Mensagem OI enviada e cliente com ID %d registrado.\n\n", orig_uid);
-			}
+			// Armazena o ID e incrementa o contador
+			printf("Mensagem OI enviada e cliente com ID %d registrado.\n\n", orig_uid);
 			break;
+
 		case 1:
 			if(!is_messager) active_display_ids[orig_uid-1] = 0;
 			else active_messager_ids[orig_uid-1001] = 0;
 			break;
+
 		case 2:
 			// Se o destino for todos os exibidores
 			if(dest_uid == 0) {
@@ -168,11 +164,9 @@ int handle_connection(int comm_socket)
 						send_msg(active_display_ids[i], &msg);
 					}
 				}
-			}
-			else {
-				if(active_display_ids[dest_uid-1] != 0) {
-					send_msg(active_display_ids[dest_uid-1], &msg);
-				}
+			
+			} else if(active_display_ids[dest_uid-1] != 0) {
+				send_msg(active_display_ids[dest_uid-1], &msg);
 			}
 			break;
 	}
@@ -180,7 +174,8 @@ int handle_connection(int comm_socket)
 	return msg_type;
 }
 
-// Função principal
+
+
 int main(int argc, char **argv, char **argenv)
 {
 	int server_socket, comm_socket;
@@ -188,7 +183,6 @@ int main(int argc, char **argv, char **argenv)
 	int highest_fd;
 	struct timeval timeout;
 	unsigned short int msg_type;
-
 	// Abrindo o socket de comunicação do servidor
 	server_socket = setting_server();
 
@@ -199,6 +193,9 @@ int main(int argc, char **argv, char **argenv)
 	FD_ZERO(&fds_current);
 	FD_SET(server_socket, &fds_current);
 
+	// Inciando temporizador
+	start_timer();
+	
 	while (1)
 	{
 		errno = 0;
@@ -229,6 +226,7 @@ int main(int argc, char **argv, char **argenv)
 
 		for (int i = server_socket; i <= highest_fd; i++)
 		{
+			printf("aqui");
 			if (FD_ISSET(i, &fds_ready))
 			{
 				if (i == server_socket)

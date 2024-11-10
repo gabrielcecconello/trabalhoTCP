@@ -5,8 +5,35 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <time.h>
 
-#define TIME 1000
+/**
+ * Envio de mensagem do servidor a cada 60 segundos informandos os clientes de exibicao,
+ * quantos clientes ha conectados e quanto tempo o servidor tem de execucao
+ */
+void message_servidor() {
+	msg_t message;
+	int cont = 0;
+
+    // Contagem de clientes conectados
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if(active_display_ids[i] != 0) {
+			cont++;
+		}
+	}
+
+    // Montagem de mensagem
+	char text[150];
+    sprintf(text, "Servidor de Redes\n- Clientes de exibicao conectados: %d\n- Tempo de execucao do servidor: %.d minutos,\n\n", cont, time_flag2/60000);
+
+    // Envio de mensagem ao clientes
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if(active_display_ids[i] != 0) {
+            fill_msg(&message, 2, 0, i + 1, text);
+            send_msg(active_display_ids[i], &message);
+        }
+    }
+}
 
 /**
  Reinicia o time
@@ -22,13 +49,16 @@ void set_timer(int miliseconds) {
 }
 
 void timer_handler(int signum) {
-    printf("parouu");
-    /* Uma outra opcao seria setar uma variavel global
-     * e testa-la no loop principal do programa, mas isso
-     * so funcionaria nos casos onde a chamada bloqueada 
-     * fosse interrompida pelo sinal
-     * (o que nao acontece no caso do teclado, pelo menos).
-     */
+    // Atualizacao de tempos flag
+    time_flag ++;
+    time_flag2 += TIME;
+
+    // Envia uma mensagem do servidor a todos os clientes de exibicao a cada 60 segundos
+    if(time_flag >= 60) {
+        message_servidor();
+        time_flag = 0;
+    }
+
     set_timer(TIME);  /* Melhor lugar para reiniciar o timer */
 }
 
@@ -47,33 +77,8 @@ void start_timer() {
 
     set_handler();
     set_timer(TIME);
-}
 
-// TODO: avaliar a necessidade dessa funcao
-void update_timer() {
-    char input[512];
-    bool done = false;
-    
-    fprintf(stderr,"Escreva algo:\n");
-
-    // Leitura da entrada colocada
-    if (fgets(input, sizeof(input), stdin) != NULL) {
-        done = true;
-        //break;
-    }
-    
-    errno = 0; /* So por garantia */
-    
-    /* fgets retorna erro se a input estava vazia ou se deu erro */
-    /* chamadas de socket so retornam < 0 se deu erro */
-    if (errno == EINTR) {
-        /* uma chamada interrompida seria tratada aqui */
-        errno = 0;
-    } else if (errno) {
-        perror("fgets");
-        exit(1);
-    } else if (feof(stdin)) {
-        fprintf(stderr,"entrada vazia.\n");
-        exit(0);
-    }
+    // Iniciando tempo do servidor
+    time_flag = 0;
+	time_flag2 = 0;
 }
