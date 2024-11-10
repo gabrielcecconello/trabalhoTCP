@@ -9,14 +9,14 @@
 #include "../utils/msg_utils.h"
 
 int main(int argc, char const *argv[]) {
-    msg_t mensage;
-    int valread, client_fd, mensage_destination;
+    msg_t message;
+    int client_fd, message_destination;
     struct sockaddr_in serv_addr;
     unsigned char buffer[BUFFER_SIZE];
-    char mensage_str[100];
+    char message_str[100];
 
-    bool is_sending_mensage = true;
-    bool is_fisrt_mensage = true;
+    bool is_sending_message = true;
+    bool is_fisrt_message = true;
 
     // Verificar se foi fornecido um identificador de cliente (argumento da linha de comando)
     if (argc != 2) {
@@ -39,73 +39,74 @@ int main(int argc, char const *argv[]) {
     // Cria um socket
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        printf("\n Erro ao criar socket \n");
+        printf("\nErro ao criar socket\n");
         return -1;
     }
 
-    // Configuracoes do socket
+    // Configurar as informações do servidor
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
-    // Configuracao do endereco de rede
+    // Converter o endereço IP do servidor (usando 127.0.0.1 para localhost)
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
     {
-        printf(" \n Endereço Inválido \n");
+        printf("\nEndereço inválido\n");
         return -1;
     }
 
     // Conecta com o servidor
     if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        printf("\n Falha na conexão \n");
+        printf("\nFalha na conexão\n");
         return -1;
     }
 
     // Envio de mensagem OI
-    fill_msg(&mensage, 0, client_id, 0, "OI");
-    send_msg(client_fd, &mensage);
+    fill_msg(&message, 0, client_id, 0, "OI");
+    send_msg(client_fd, &message);
     printf("Conectando ao servidor ... \n\n");
 
     // Leitura da resposta do servidor
-    receive_msg(client_fd, &mensage);
-    printf("\nMensagem do servidor: %s\n\n", mensage.text);
+    receive_msg(client_fd, &message);
+    printf("\nMensagem do servidor: %s\n\n", message.text);
 
     // Envio de multiplas mensagens para o servidor
-    while(is_sending_mensage) {
-        if(!is_fisrt_mensage) {
+    while(is_sending_message) {
+        if(!is_fisrt_message) {
             printf("\t\t\t*** Cliente %d ***\n\n", client_id);
         }
 
         printf("Insira uma mensagem ou [q] para parar\n\n");
         printf("mensagem: ");
 
-        if(!is_fisrt_mensage) {
+        if(!is_fisrt_message) {
             getchar();
         }
         
-        scanf("%[^\n]", mensage_str);
+        scanf("%[^\n]", message_str);
         fflush(stdout);
 
-        if(strcmp(mensage_str, "q") != 0) {
+        if(strcmp(message_str, "q") != 0) {
             printf("Identificacao de destino: ");
-            scanf("%d", &mensage_destination);
+            scanf("%d", &message_destination);
             fflush(stdout);
 
-            fill_msg(&mensage, 2, client_id, mensage_destination, mensage_str);
-            send_msg(client_fd, &mensage);
+            fill_msg(&message, 2, client_id, message_destination, message_str);
+            send_msg(client_fd, &message);
         } else {
-            is_sending_mensage = false;
+            is_sending_message = false;
         }
 
-        is_fisrt_mensage = false;
+        is_fisrt_message = false;
         system("clear");
     }
 
     // Envio de mensagem TCHAU e desconexao com o servidor
     printf("\t\t\t*** Cliente %d ***\n\nDesligando sistema ...\n\n", client_id);
-    fill_msg(&mensage, 1, client_id, 0, "TCHAU");
-    send_msg(client_fd, &mensage);
+    fill_msg(&message, 1, client_id, 0, "TCHAU");
+    send_msg(client_fd, &message);
 
+    fflush(stdout);
     close(client_fd);
     return 0;
 }
