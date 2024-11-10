@@ -217,8 +217,19 @@ int main(int argc, char **argv, char **argenv)
 
 		if (select(highest_fd + 1, &fds_ready, NULL, NULL, &timeout) < 0)
 		{
-			perror("Falha na operação de 'select'");
-			exit(EXIT_FAILURE);
+			/* fgets retorna erro se a input estava vazia ou se deu erro */
+			/* chamadas de socket so retornam < 0 se deu erro */
+			if (errno == EINTR) {
+				/* uma chamada interrompida seria tratada aqui */
+				printf("oi");
+				errno = 0;
+			} else if (errno) {
+				perror("select");
+				exit(1);
+			}
+
+			// perror("Falha na operação de 'select'");
+			// exit(EXIT_FAILURE);
 		}
 
 		for (int i = server_socket; i <= highest_fd; i++)
@@ -247,19 +258,7 @@ int main(int argc, char **argv, char **argenv)
 			}
 		}
 
-		/* fgets retorna erro se a input estava vazia ou se deu erro */
-		/* chamadas de socket so retornam < 0 se deu erro */
-		if (errno == EINTR) {
-			/* uma chamada interrompida seria tratada aqui */
-			printf("oi");
-			errno = 0;
-		} else if (errno) {
-			perror("fgets");
-			exit(1);
-		} else if (feof(stdin)) {
-			fprintf(stderr,"entrada vazia.\n");
-			exit(0);
-		}
+		
 	}
 
 	return (0);
