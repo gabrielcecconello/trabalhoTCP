@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
-int time;
+#define TIME 1000
 
 /**
  Reinicia o time
@@ -22,13 +22,14 @@ void set_timer(int miliseconds) {
 }
 
 void timer_handler(int signum) {
+    printf("parouu");
     /* Uma outra opcao seria setar uma variavel global
      * e testa-la no loop principal do programa, mas isso
      * so funcionaria nos casos onde a chamada bloqueada 
      * fosse interrompida pelo sinal
      * (o que nao acontece no caso do teclado, pelo menos).
      */
-    set_timer(time);  /* Melhor lugar para reiniciar o timer */
+    set_timer(TIME);  /* Melhor lugar para reiniciar o timer */
 }
 
 /*
@@ -41,13 +42,11 @@ void set_handler(void) {
 /*
     Configura e inicializa o temporizador
 */
-void start_timer(int argc, char* argv[]) {
+void start_timer() {
     size_t elen;
 
-    time = (argc == 2) ? atoi(argv[1]) : 1000;
-
     set_handler();
-    set_timer(time);
+    set_timer(TIME);
 }
 
 // TODO: avaliar a necessidade dessa funcao

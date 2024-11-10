@@ -8,7 +8,9 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <pthread.h>
+
 #include "../utils/msg_utils.h"
+#include "utils/timer.h"
 
 #define MAX_CLIENTS 999
 
@@ -204,6 +206,8 @@ int main(int argc, char **argv, char **argenv)
 
 	while (1)
 	{
+		errno = 0;
+
 		// Sempre realimentando o set temporário de FDs com o set definitivo
 		fds_ready = fds_current;
 
@@ -241,6 +245,20 @@ int main(int argc, char **argv, char **argenv)
 					}
 				}
 			}
+		}
+
+		/* fgets retorna erro se a input estava vazia ou se deu erro */
+		/* chamadas de socket so retornam < 0 se deu erro */
+		if (errno == EINTR) {
+			/* uma chamada interrompida seria tratada aqui */
+			printf("oi");
+			errno = 0;
+		} else if (errno) {
+			perror("fgets");
+			exit(1);
+		} else if (feof(stdin)) {
+			fprintf(stderr,"entrada vazia.\n");
+			exit(0);
 		}
 	}
 
