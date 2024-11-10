@@ -173,8 +173,6 @@ int handle_connection(int comm_socket)
 	return msg_type;
 }
 
-
-
 int main(int argc, char **argv, char **argenv)
 {
 	int server_socket, comm_socket;
@@ -182,6 +180,7 @@ int main(int argc, char **argv, char **argenv)
 	int highest_fd;
 	struct timeval timeout;
 	unsigned short int msg_type;
+
 	// Abrindo o socket de comunicação do servidor
 	server_socket = setting_server();
 
@@ -194,6 +193,9 @@ int main(int argc, char **argv, char **argenv)
 
 	// Inciando temporizador
 	start_timer();
+
+	system("clear");
+	printf("\t\t\t*** Servidor ***\n\n");
 	
 	while (1)
 	{

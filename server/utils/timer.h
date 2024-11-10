@@ -22,9 +22,13 @@ void message_servidor() {
 		}
 	}
 
+    time_t current_time;
+    current_time = time(NULL);
+    double actual_time = difftime(current_time, time_start_server);
+
     // Montagem de mensagem
 	char text[150];
-    sprintf(text, "Servidor de Redes\n- Clientes de exibicao conectados: %d\n- Tempo de execucao do servidor: %.d minutos,\n\n", cont, time_flag2/60000);
+    sprintf(text, "Servidor de Redes\n- Clientes de exibicao conectados: %d\n- Tempo de execucao do servidor: %.6f minutos,\n\n", cont, actual_time/60);
 
     // Envio de mensagem ao clientes
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -50,13 +54,13 @@ void set_timer(int miliseconds) {
 
 void timer_handler(int signum) {
     // Atualizacao de tempos flag
-    time_flag ++;
-    time_flag2 += TIME;
+    time_flag2 = time(NULL);
+    double time_flag3 = difftime(time_flag2, time_flag);
 
     // Envia uma mensagem do servidor a todos os clientes de exibicao a cada 60 segundos
-    if(time_flag >= 60) {
+    if(time_flag3 >= 60.0) {
         message_servidor();
-        time_flag = 0;
+        time_flag = time_flag2;
     }
 
     // Reinicia o timer
@@ -80,6 +84,6 @@ void start_timer() {
     set_timer(TIME);
 
     // Iniciando tempo do servidor
-    time_flag = 0;
-	time_flag2 = 0;
+    time_flag = time(NULL);
+    time_start_server = time(NULL);
 }
