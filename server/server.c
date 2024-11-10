@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #include "../utils/msg_utils.h"
-#include "utils/timer.h"
+#include "./utils/timer.h"
 
 #define MAX_CLIENTS 999
 
@@ -97,6 +97,15 @@ int is_client_id_used(int client_id)
 	}
 }
 
+// OLHAR SE TEM COMO MELHORAR ESSE TREM FEIO
+int get_id(int comm_socket) {
+	for(int i = 0; i < MAX_CLIENTS; i++) {
+		if(active_display_ids[i] == comm_socket) return i+1;
+		else if(active_messager_ids[i] == comm_socket) return i+1001;
+	}
+	return 0;
+}
+
 // Função para lidar com a conexão
 int handle_connection(int comm_socket)
 {
@@ -106,15 +115,20 @@ int handle_connection(int comm_socket)
 	unsigned short int msg_type, orig_uid, dest_uid, is_messager;
 
 	// Lê a mensagem e exibe
-	if (!receive_msg(comm_socket, &msg)) msg_type = 1;
-	else msg_type = msg.type;
+	if (!receive_msg(comm_socket, &msg)) {
+		msg_type = 1;
+		printf("Erro na leitura. Cliente desconectado.\n\n");
+		orig_uid = get_id(comm_socket);
+	}	
+	else {
+		msg_type = msg.type;
+		orig_uid = msg.orig_uid;
+		dest_uid = msg.dest_uid;
+		print_msg(&msg);
+	}
 
-	orig_uid = msg.orig_uid;
-	dest_uid = msg.dest_uid;
 	is_messager = verify_messager(orig_uid);
 	
-	print_msg(&msg);
-
 	switch(msg_type) {
 		case 0:
 			// Verifica se o ID está em uso
@@ -129,28 +143,9 @@ int handle_connection(int comm_socket)
 			}
 			else
 			{
-				// TIREI O CHECK DO NÚMERO DE CLIENTES
 				// Registra o ID do cliente
-				if(!is_messager) {
-					active_display_ids[orig_uid-1] = comm_socket;
-
-					// print humilde de debug
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						printf("%d ", active_display_ids[i]);
-					}
-					printf("\n");
-				}
-				else {
-					active_messager_ids[orig_uid-1001] = comm_socket;
-
-					// print humilde de debug
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						printf("%d ", active_messager_ids[i]);
-					}
-					printf("\n");
-				}
+				if(!is_messager) active_display_ids[orig_uid-1] = comm_socket;
+				else active_messager_ids[orig_uid-1001] = comm_socket;
 
 				// Reenvio da mensagem de OI vinda do cliente.
 				fill_msg(&msg, 0, 0, orig_uid, msg.text);

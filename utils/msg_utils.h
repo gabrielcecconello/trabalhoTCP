@@ -264,11 +264,7 @@ int receive_msg(int socket, msg_t *msg)
 	{
 		deserialize_msg(msg, buffer);
 	}
-	else if (bytes_received <= 0)
-	{
-		perror("Falha ao ler mensagem.\n\n");
-		return 0;
-	}
+	else if (bytes_received <= 0) return 0;
 
 	fflush(stdout);
 	memset(&buffer, 0, BUFFER_SIZE);

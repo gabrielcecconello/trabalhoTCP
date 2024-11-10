@@ -29,8 +29,8 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    // Mostrar o ID do cliente
-    printf("Cliente ID: %d\n", client_id);
+    system("clear");
+    printf("\t\t\t*** Cliente %d ***\n", client_id);
 
     // Criar o socket TCP
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -56,8 +56,6 @@ int main(int argc, char const *argv[])
         perror("Falha na conexão");
         return -1;
     }
-
-    printf("Conectado ao servidor.\n");
 
     // Enviar a mensagem OI para o servidor
     msg_t msg;
