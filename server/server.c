@@ -147,6 +147,7 @@ int handle_connection(int comm_socket)
 					}
 
 					if(cont >= 10) {
+						printf("Limite de clientes de envio excedido");
 						return 1;
 					}
 				}
@@ -159,6 +160,7 @@ int handle_connection(int comm_socket)
 				}
 
 				if(cont >= 10) {
+					printf("Limite de clientes de exibicao excedido");
 					return 1;
 				}
 			}
