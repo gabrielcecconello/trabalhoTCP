@@ -8,6 +8,7 @@
 
 int main(int argc, char const *argv[])
 {
+    msg_t msg;
     int valread, client_fd;
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0}; // Buffer para armazenar a mensagem recebida do servidor
@@ -50,6 +51,8 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    printf("Conectando ao servidor ...\n\n");
+
     // Conectar ao servidor
     if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
@@ -58,14 +61,12 @@ int main(int argc, char const *argv[])
     }
 
     // Enviar a mensagem OI para o servidor
-    msg_t msg;
-
     fill_msg(&msg, 0, client_id, 0, "OI");
     if(send_msg(client_fd, &msg)) {
         printf("Mensagem OI enviada para o servidor.\n");
     }
 
-    if(receive_msg(client_fd, &msg)) print_msg(&msg);
+    if(receive_msg(client_fd, &msg)) printf("Mensagem do Servidor: %s\n\n", msg.text);
     
     // Loop para ler as mensagens do servidor (tipo MSG)
     while (1) {

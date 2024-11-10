@@ -106,7 +106,6 @@ int get_id(int comm_socket) {
 // Função para lidar com a conexão
 int handle_connection(int comm_socket)
 {
-	char *hello = "Hello from server\n";
 	msg_t msg;
 	initialize_msg(&msg);
 	unsigned short int msg_type, orig_uid, dest_uid, is_messager;
@@ -147,7 +146,7 @@ int handle_connection(int comm_socket)
 			send_msg(comm_socket, &msg);
 
 			// Armazena o ID e incrementa o contador
-			printf("Mensagem OI enviada e cliente com ID %d registrado.\n\n", orig_uid);
+			printf("Mensagem OI enviada para cliente com ID %d registrado.\n\n", orig_uid);
 			break;
 
 		case 1:
@@ -232,26 +231,26 @@ int main(int argc, char **argv, char **argenv)
 		}
 			
 		for (int i = server_socket; i <= highest_fd; i++) {
-			if (FD_ISSET(i, &fds_ready))
+			
+			if (!FD_ISSET(i, &fds_ready)) continue;
+
+			if (i == server_socket)
 			{
-				if (i == server_socket)
+				comm_socket = accept_new_connection(server_socket);
+				FD_SET(comm_socket, &fds_current);
+				if (comm_socket > highest_fd)
 				{
-					comm_socket = accept_new_connection(server_socket);
-					FD_SET(comm_socket, &fds_current);
-					if (comm_socket > highest_fd)
-					{
-						highest_fd = comm_socket;
-					}
+					highest_fd = comm_socket;
 				}
-				else
+			}
+			else
+			{
+				msg_type = handle_connection(i);
+				// Caso a mensagem seja de 'tchau' (ou outro tipo de desconexão)
+				if (msg_type == 1)
 				{
-					msg_type = handle_connection(i);
-					// Caso a mensagem seja de 'tchau' (ou outro tipo de desconexão)
-					if (msg_type == 1)
-					{
-						FD_CLR(i, &fds_current);
-						close(i);
-					}
+					FD_CLR(i, &fds_current);
+					close(i);
 				}
 			}
 		}

@@ -36,7 +36,7 @@ void message_servidor() {
 }
 
 /**
- Reinicia o time
+ Reinicia o timer
  */
 void set_timer(int miliseconds) {
     struct itimerval newvalue, oldvalue;
@@ -59,7 +59,8 @@ void timer_handler(int signum) {
         time_flag = 0;
     }
 
-    set_timer(TIME);  /* Melhor lugar para reiniciar o timer */
+    // Reinicia o timer
+    set_timer(TIME);
 }
 
 /*
