@@ -207,26 +207,31 @@ int main(int argc, char **argv, char **argenv)
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
 
-		if (select(highest_fd + 1, &fds_ready, NULL, NULL, &timeout) < 0)
+ 		int select_result = select(highest_fd + 1, &fds_ready, NULL, NULL, &timeout);
+
+		if (select_result < 0)
 		{
-			/* fgets retorna erro se a input estava vazia ou se deu erro */
-			/* chamadas de socket so retornam < 0 se deu erro */
-			if (errno == EINTR) {
-				/* uma chamada interrompida seria tratada aqui */
-				printf("oi");
+			if(errno == EAGAIN) {
+				set_handler();
+				set_timer(TIME);
+				continue;
+			
+			} else if (errno == EINTR) {
+				set_handler();
+				set_timer(TIME);
 				errno = 0;
+				continue;
+
 			} else if (errno) {
 				perror("select");
 				exit(1);
 			}
-
-			// perror("Falha na operação de 'select'");
-			// exit(EXIT_FAILURE);
+		}	else if (select_result == 0) {
+			// Timeout ocorreu, mas sem dados prontos para leitura, reiniciamos o loop
+			continue;
 		}
-
-		for (int i = server_socket; i <= highest_fd; i++)
-		{
-			printf("aqui");
+			
+		for (int i = server_socket; i <= highest_fd; i++) {
 			if (FD_ISSET(i, &fds_ready))
 			{
 				if (i == server_socket)
@@ -250,8 +255,6 @@ int main(int argc, char **argv, char **argenv)
 				}
 			}
 		}
-
-		
 	}
 
 	return (0);

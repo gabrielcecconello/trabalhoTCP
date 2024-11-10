@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
         // Se a mensagem for do tipo MSG
         if (msg.type == 2) {
             if(msg.orig_uid == 0) {
-                printf("Mensagem do servidor: %s", msg.text);
+                printf("\nMensagem do Servidor: %s", msg.text);
             
             } else if (msg.dest_uid == 0) {
                 printf("Mensagem de %d: %s\n", msg.orig_uid, msg.text);
@@ -86,6 +86,8 @@ int main(int argc, char const *argv[])
                 printf("Mensagem privada de %d: %s\n", msg.orig_uid, msg.text);
             }
         }
+
+        memset(msg.text, '\0', sizeof(msg.text));
     }
 
     // Fechar o socket
