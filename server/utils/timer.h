@@ -28,7 +28,7 @@ void message_servidor() {
 
     // Montagem de mensagem
 	char text[150];
-    sprintf(text, "Servidor de Redes\n- Clientes de exibicao conectados: %d\n- Tempo de execucao do servidor: %.6f minutos,\n\n", cont, actual_time/60);
+    sprintf(text, "Servidor de Redes\n- Clientes de exibicao conectados: %d\n- Tempo de execucao do servidor: %.0f minutos,\n\n", cont, actual_time/60);
 
     // Envio de mensagem ao clientes
     for (int i = 0; i < MAX_CLIENTS; i++) {

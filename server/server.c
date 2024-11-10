@@ -137,6 +137,32 @@ int handle_connection(int comm_socket)
 				printf("Houve uma tentativa de conexão como um cliente com ID %d, mas esse identificador já se encontra em uso!\n\n", orig_uid);
 				return 1; // Indica erro
 			}
+
+			// Verifica se ha menos de 10 cliente de envio
+			int cont;
+			if(orig_uid > 1000) {
+				for (int i = 1; i <= MAX_CLIENTS; i++) {
+					if(active_messager_ids[i] != 0) {
+						cont ++;
+					}
+
+					if(cont >= 10) {
+						return 1;
+					}
+				}
+			}
+
+			// Verifica se ha menos de 10 cliente de exibicao
+			for (int i = 1; i <= MAX_CLIENTS; i++) {
+				if(active_display_ids[i] != 0) {
+					cont ++;
+				}
+
+				if(cont >= 10) {
+					return 1;
+				}
+			}
+			
 			// Registra o ID do cliente
 			if(!is_messager) active_display_ids[orig_uid-1] = comm_socket;
 			else active_messager_ids[orig_uid-1001] = comm_socket;
