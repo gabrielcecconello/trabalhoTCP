@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]) {
     char message_str[100];
 
     bool is_sending_message = true;
-    bool is_fisrt_message = true;
+    bool is_first_message = true;
 
     // Verificar se foi fornecido um identificador de cliente (argumento da linha de comando)
     if (argc != 2) {
@@ -73,17 +73,23 @@ int main(int argc, char const *argv[]) {
     }
 
     printf("\nMensagem do servidor: %s\n\n", message.text);
+
+    if(message.type == 1) {
+        printf("\n\n");
+        close(client_fd);
+        return 0;
+    }
     
     // Envio de multiplas mensagens para o servidor
     while(is_sending_message) {
-        if(!is_fisrt_message) {
+        if(!is_first_message) {
             printf("\t\t\t*** Cliente %d ***\n\n", client_id);
         }
 
         printf("Insira uma mensagem ou [q] para parar\n\n");
         printf("mensagem: ");
 
-        if(!is_fisrt_message) {
+        if(!is_first_message) {
             getchar();
         }
         
@@ -101,7 +107,7 @@ int main(int argc, char const *argv[]) {
             is_sending_message = false;
         }
 
-        is_fisrt_message = false;
+        is_first_message = false;
         system("clear");
     }
 

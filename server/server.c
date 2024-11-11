@@ -89,7 +89,7 @@ int is_client_id_used(int client_id)
 		else return 1;
 	}
 	else {
-		if(active_messager_ids[client_id-1] == 0) return 0;
+		if(active_messager_ids[client_id-1001] == 0) return 0;
 		else return 1;
 	}
 }
@@ -112,16 +112,17 @@ int handle_connection(int comm_socket)
 
 	// Lê a mensagem e exibe
 	if (!receive_msg(comm_socket, &msg)) {
-		msg_type = 1;
-		printf("Erro na leitura. Cliente desconectado.\n\n");
 		orig_uid = get_id(comm_socket);
+		fill_msg(&msg, 1, orig_uid, orig_uid - 1000, "TCHAU");
+		printf("Erro na leitura. Cliente %d desconectado.\n\n", orig_uid);
 	}	
 	else {
-		msg_type = msg.type;
 		orig_uid = msg.orig_uid;
-		dest_uid = msg.dest_uid;
 		print_msg(&msg);
 	}
+
+	msg_type = msg.type;
+	dest_uid = msg.dest_uid;
 
 	is_messager = verify_messager(orig_uid);
 	
@@ -140,8 +141,8 @@ int handle_connection(int comm_socket)
 
 			int cont = 0;
 			// Verifica se ha menos de 10 cliente de exibicao
-			if(orig_uid > 1000) {
-				for (int i = 1; i <= MAX_CLIENTS; i++) {
+			if(is_messager) {
+				for (int i = 0; i < MAX_CLIENTS; i++) {
 					if(active_messager_ids[i] != 0) {
 						cont ++;
 					}
@@ -159,7 +160,7 @@ int handle_connection(int comm_socket)
 			} else {
 				cont = 0;
 				// Verifica se ha menos de 10 cliente de exibicao
-				for (int i = 1; i <= MAX_CLIENTS; i++) {
+				for (int i = 0; i < MAX_CLIENTS; i++) {
 					if(active_display_ids[i] != 0) {
 						cont ++;
 					}
@@ -190,12 +191,17 @@ int handle_connection(int comm_socket)
 			break;
 
 		case 1:
-			active_messager_ids[orig_uid-1001] = 0;
-			send_msg(active_display_ids[orig_uid-1001], &msg);
-			close(active_display_ids[orig_uid-1001]);
-			active_display_ids[orig_uid-1001] = 0;
+			if(is_messager) {
+				active_messager_ids[orig_uid-1001] = 0;
+				send_msg(active_display_ids[orig_uid-1001], &msg);
+				close(active_display_ids[orig_uid-1001]);
+				FD_CLR(active_display_ids[orig_uid-1001], &fds_current);
+				active_display_ids[orig_uid-1001] = 0;
+			}
+			else {
+				active_display_ids[orig_uid-1] = 0;
+			}
 			break;
-
 		case 2:
 			// Se o destino for todos os exibidores
 			if(dest_uid == 0) {
@@ -218,7 +224,7 @@ int handle_connection(int comm_socket)
 int main(int argc, char **argv, char **argenv)
 {
 	int server_socket, comm_socket;
-	fd_set fds_ready, fds_current;
+	fd_set fds_ready;
 	int highest_fd;
 	struct timeval timeout;
 	unsigned short int msg_type;
