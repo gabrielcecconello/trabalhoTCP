@@ -102,7 +102,10 @@ int main(int argc, char const *argv[]) {
             fflush(stdout);
 
             fill_msg(&message, 2, client_id, message_destination, message_str);
-            send_msg(client_fd, &message);
+            if(!send_msg(client_fd, &message)) {
+                printf("Conexao interrompida do servidor");
+                return 0;
+            }
         } else {
             is_sending_message = false;
         }
@@ -113,7 +116,7 @@ int main(int argc, char const *argv[]) {
 
     // Envio de mensagem TCHAU e desconexao com o servidor
     printf("\t\t\t*** Cliente %d ***\n\nDesligando sistema ...\n\n", client_id);
-    fill_msg(&message, 1, client_id, client_id - 1000, "TCHAU");
+    fill_msg(&message, 1, client_id, 0, "TCHAU");
     send_msg(client_fd, &message);
 
     fflush(stdout);

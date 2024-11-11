@@ -113,8 +113,8 @@ int handle_connection(int comm_socket)
 	// Lê a mensagem e exibe
 	if (!receive_msg(comm_socket, &msg)) {
 		orig_uid = get_id(comm_socket);
-		fill_msg(&msg, 1, orig_uid, orig_uid - 1000, "TCHAU");
-		printf("Erro na leitura. Cliente %d desconectado.\n\n", orig_uid);
+		fill_msg(&msg, 1, orig_uid, 0, "TCHAU");
+		print_msg(&msg);
 	}	
 	else {
 		orig_uid = msg.orig_uid;
@@ -170,12 +170,6 @@ int handle_connection(int comm_socket)
 						return 1;
 					}
 				}
-
-				// Verifica se nao ha nenhum cliente de envio relativo cadastrado
-				if(active_messager_ids[msg.orig_uid - 1] != 0) {
-					printf("ja ha cliente de envio no id %d\n\n", orig_uid + 1000);
-					return 1;
-				}
 			}
 			
 			// Registra o ID do cliente
@@ -193,10 +187,14 @@ int handle_connection(int comm_socket)
 		case 1:
 			if(is_messager) {
 				active_messager_ids[orig_uid-1001] = 0;
-				send_msg(active_display_ids[orig_uid-1001], &msg);
-				close(active_display_ids[orig_uid-1001]);
-				FD_CLR(active_display_ids[orig_uid-1001], &fds_current);
-				active_display_ids[orig_uid-1001] = 0;
+				msg.dest_uid = orig_uid - 1000;
+
+				if(active_display_ids[orig_uid - 1001] !=0) {
+					send_msg(active_display_ids[orig_uid-1001], &msg);
+					close(active_display_ids[orig_uid-1001]);
+					FD_CLR(active_display_ids[orig_uid-1001], &fds_current);
+					active_display_ids[orig_uid-1001] = 0;
+				}
 			}
 			else {
 				active_display_ids[orig_uid-1] = 0;
