@@ -24,7 +24,7 @@ Instale o **WSL** caso esteja utilizando Windows, mas caso esteja usando uma dis
 Via terminal, instale o **gcc** para a compilação dos arquivos e o **make** para o uso do makefile.
 
 ```
-sudo apt install gcc && sudo apt install make
+sudo apt install gcc make
 ```
 ### 2. Clonando o repositório e compilando o código
 
